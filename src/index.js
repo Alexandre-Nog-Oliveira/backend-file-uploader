@@ -1,9 +1,12 @@
 const express = require('express')
+const morgan = require("morgan")
 
 const app = express()
 
-app.get('/', (req, res) =>{
-    return res.status(200).send({message: "Rota padrão"})
-})
+app.use(express.json())
+app.use(express.urlencoded({extended: true}))
+app.use(morgan('dev'));
+
+app.use(require("./routes"))
 
 app.listen(3300)
