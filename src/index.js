@@ -1,26 +1,34 @@
-require('dotenv').config()
+const routes = require("express").Router();
+const multer = require("multer");
+const multerConfig = require("./config/multer");
 
-const express = require('express')
-const morgan = require("morgan")
-const mongoose = require('mongoose')
+const Post = require("./models/Post");
 
-const app = express()
+routes.get("/posts", async (req, res) => {
+  const posts = await Post.find();
 
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
-app.use(morgan('dev'));
+  return res.json(posts);
+});
 
-app.use(require("./routes"))
+routes.post("/posts", multer(multerConfig).single("file"), async (req, res) => {
+  const { originalname: name, size, key, location: url = "" } = req.file;
 
-// Database.setup
+  const post = await Post.create({
+    name,
+    size,
+    key,
+    url
+  });
 
-const DB_User = process.env.DB_User
-const DB_Password = process.env.DB_Password
+  return res.json(post);
+});
 
-mongoose.connect(`mongodb+srv://${DB_User}:${DB_Password}@backend-file-uploader-c.4m3mepj.mongodb.net/?retryWrites=true&w=majority&appName=AtlasApp`, {
-    useNewUrlParser: true
-}).then(() =>{
-    app.listen(3400);
-    console.log('Server is running and connect database')
-}).catch((err) => console.log(err))
+routes.delete("/posts/:id", async (req, res) => {
+  const post = await Post.findById(req.params.id);
 
+  await post.remove();
+
+  return res.send();
+});
+
+module.exports = routes;
